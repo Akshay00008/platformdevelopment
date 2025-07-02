@@ -38,7 +38,7 @@ sync_info = {
 def update_sync_status(chatbot_id, version_id):
     try:
         client = pymongo.MongoClient("mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017")
-        db = client["ChatbotDB"]
+        db = client["ChatbotDB-DEV"]
         collection = db['chatbotversions']
 
         
