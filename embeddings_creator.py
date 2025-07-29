@@ -381,7 +381,7 @@ def load_or_create_faiss_index(docs: List[str], chatbot_id: str, version_id: str
 def embeddings_from_gcb(chatbot_id: str, version_id: str, bucket_name: str, blob_names: List[str]) -> str:
     try:
         # Retrieve documents from Google Cloud Storage
-        # docs = read_pdf_from_gcs(bucket_name, blob_names)
+        
         docs= read_documents_from_gcs(bucket_name, blob_names)
         logger.info(f"Documents extracted: {len(docs)}")
 
