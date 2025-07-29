@@ -28,7 +28,7 @@ def load_faiss_index(chatbot_id,version_id,):
     Load the FAISS index fresh from disk each time it's called.
 
     """
-    faiss_index_dir = "/home/bramhesh_srivastav/Platform_DataScience/faiss_indexes"
+    faiss_index_dir = "/home/bramhesh_srivastav/platformdevelopment/faiss_indexes"
     
     # Create the unique index filename based on chatbot_id and version_id
     # faiss_index_filename = f"{chatbot_id}_{version_id}_faiss_index"
