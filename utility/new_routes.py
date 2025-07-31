@@ -10,7 +10,7 @@ from Databases.mongo import Bot_Retrieval,website_tag_saving
 from embeddings_creator import embeddings_from_gcb, embeddings_from_website_content
 from utility.Files_upload_description import description_from_gcs
 from Youtube_extractor import extract_and_store_descriptions
-from utility.website_tag_generator import new_generate_tags_from_gpt
+from utility.website_tag_generator import new_generate_tags_from_gpt, generate_tags_and_buckets_from_json
 from utility.logger_file import Logs
 from bson import ObjectId
 import pymongo
@@ -102,11 +102,33 @@ def process_scraping(url, chatbot_id, version_id):
         website_taggers = new_generate_tags_from_gpt(json_data)
         print("***********************")
 
+
         website_tag_saving(website_taggers, chatbot_id, version_id)
         print("Tags created and stored in MongoDB")
 
         embeddings_from_website_content(json_data, chatbot_id, version_id)
         print("Website vector created")
+
+        # Generate the tags and buckets
+        tags_and_buckets = generate_tags_and_buckets_from_json(url, json_data)
+
+        # Parse the OpenAI output into a structured format
+        tags_buckets = {}
+        for line in tags_and_buckets.split('\n'):
+            if ':' in line:
+                tag, bucket = line.split(':')
+                tags_buckets[tag.strip()] = bucket.strip()
+
+        # Prepare JSON output
+        json_data = {
+            'tags_and_buckets': tags_buckets
+        }
+
+        # Print the JSON result
+        json_output = json.dumps(json_data, indent=4)
+        print("****129*********")
+        print(json_output)
+      
 
         loggs.info(f"Tags and vectors generated for URL: {url}")
 

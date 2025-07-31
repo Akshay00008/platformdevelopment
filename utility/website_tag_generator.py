@@ -85,3 +85,46 @@ def new_generate_tags_from_gpt(json_data):
         logging.exception("Error generating tags from GPT.")
         print("Error generating tags from GPT.")
         return {"error": str(e)}
+    
+def generate_tags_and_buckets_from_json(url, scraped_data):
+    # Convert the scraped data into a format that can be passed to OpenAI
+    tags_content = "\n".join([item['text'] for item in scraped_data])  # assuming 'text' is the field containing the content
+    
+    # Define the prompt for OpenAI
+    prompt = f"""
+    I have scraped content from the website at {url}. Here is a list of content:
+    {tags_content}
+
+    For each piece of content, generate relevant tags and assign them to a bucket. 
+    Example buckets could be 'products', 'applications', 'services', 'industries', 'solutions', 'others', etc.
+
+    Provide the tags along with their corresponding bucket.
+    """
+
+    # Call OpenAI API with the prompt
+    response = openai.Completion.create(
+        engine="text-davinci-003",  # or whichever engine you prefer
+        prompt=prompt,
+        max_tokens=300,
+        temperature=0.7
+    )
+
+    # Extract the result
+    result = response.choices[0].text.strip()
+
+    return result
+
+# # Example: Your scraped data in JSON format
+# scraped_data = [
+#     {"text": "Inline heaters for industrial applications."},
+#     {"text": "Chemical heating solutions for energy efficiency."},
+#     {"text": "Innovative thermal systems to improve energy usage."},
+#     {"text": "Industrial heating for process heating applications."},
+#     {"text": "Solutions for energy savings in manufacturing."}
+# ]
+
+# url = 'https://www.processtechnology.com/'
+
+
+
+
