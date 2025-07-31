@@ -88,12 +88,12 @@ def new_generate_tags_from_gpt(json_data):
     
 def generate_tags_and_buckets_from_json(url, scraped_data):
     # Convert the scraped data into a format that can be passed to OpenAI
-    tags_content = "\n".join([item['text'] for item in scraped_data])  # assuming 'text' is the field containing the content
+    # tags_content = "\n".join([item['text'] for item in scraped_data])  # assuming 'text' is the field containing the content
     
     # Define the prompt for OpenAI
     prompt = f"""
     I have scraped content from the website at {url}. Here is a list of content:
-    {tags_content}
+    {scraped_data}
 
     For each piece of content, generate relevant tags and assign them to a bucket. 
     Example buckets could be 'products', 'applications', 'services', 'industries', 'solutions', 'others', etc.
