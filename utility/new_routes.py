@@ -110,31 +110,31 @@ def process_scraping(url, chatbot_id, version_id):
         print("Website vector created")
 
         # Generate the tags and buckets
-        tags_and_buckets = generate_tags_and_buckets_from_json(url,json_data)
+    #     tags_and_buckets = generate_tags_and_buckets_from_json(url,json_data)
 
-        # Parse the OpenAI output into a structured format
-        tags_buckets = {}
-        for line in tags_and_buckets.split('\n'):
-            if ':' in line:
-                tag, bucket = line.split(':')
-                tags_buckets[tag.strip()] = bucket.strip()
-        print(tags_buckets)
+    #     # Parse the OpenAI output into a structured format
+    #     tags_buckets = {}
+    #     for line in tags_and_buckets.split('\n'):
+    #         if ':' in line:
+    #             tag, bucket = line.split(':')
+    #             tags_buckets[tag.strip()] = bucket.strip()
+    #     print(tags_buckets)
        
-        # Prepare JSON output
-        json_data = {
-            'tags_and_buckets': tags_buckets
-        }
+    #     # Prepare JSON output
+    #     json_data = {
+    #         'tags_and_buckets': tags_buckets
+    #     }
 
-        # Print the JSON result
-        json_output = json.dumps(json_data, indent=4)
-        print("****129*********")
-        print(json_output)
+    #     # Print the JSON result
+    #     json_output = json.dumps(json_data, indent=4)
+    #     print("****129*********")
+    #     print(json_output)
       
 
-        loggs.info(f"Tags and vectors generated for URL: {url}")
+    #     loggs.info(f"Tags and vectors generated for URL: {url}")
 
-        # ✅ Only mark thread done if all succeed
-        mark_thread_done()
+    #     # ✅ Only mark thread done if all succeed
+    #     mark_thread_done()
 
     except Exception as e:
         loggs.info(f"Error during background scraping: {str(e)}")
