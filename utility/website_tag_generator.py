@@ -86,13 +86,21 @@ def new_generate_tags_from_gpt(json_data):
         print("Error generating tags from GPT.")
         return {"error": str(e)}
     
-def generate_tags_and_buckets_from_json(url):
+def generate_tags_and_buckets_from_json(url,json_data):
     # Convert the scraped data into a format that can be passed to Langchain
     # scraped_content = "\n".join([item['text'] for item in scraped_data])  # assuming 'text' is the field containing the content
     
+    try:
+        json_preview = json.dumps(json_data[:20], indent=2)  # Safely preview a portion
+    except Exception as e:
+        logging.error(f"Error processing JSON: {e}")
+        json_preview = "{}"
+
     # Define the prompt for Langchain
     prompt = f"""
-    You are bot to get the content from the website at {url}. 
+    I have scraped content from the website at {url}. Here is a list of content:
+    {json_preview}
+
 
     For each piece of content, generate relevant tags and assign them to a bucket. 
     Example buckets could be 'products', 'applications', 'services', 'industries', 'solutions', 'others', etc.
