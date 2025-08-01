@@ -91,7 +91,7 @@ def generate_tags_and_buckets_from_json(url,json_data):
     # scraped_content = "\n".join([item['text'] for item in scraped_data])  # assuming 'text' is the field containing the content
     
     try:
-        json_preview = json.dumps(json_data[:40], indent=2)  # Safely preview a portion
+        json_preview = json.dumps(json_data[:15], indent=2)  # Safely preview a portion
     except Exception as e:
         logging.error(f"Error processing JSON: {e}")
         json_preview = "{}"
