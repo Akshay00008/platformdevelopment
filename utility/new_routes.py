@@ -118,7 +118,8 @@ def process_scraping(url, chatbot_id, version_id):
             if ':' in line:
                 tag, bucket = line.split(':')
                 tags_buckets[tag.strip()] = bucket.strip()
-
+        print(tags_buckets)
+       
         # Prepare JSON output
         json_data = {
             'tags_and_buckets': tags_buckets
