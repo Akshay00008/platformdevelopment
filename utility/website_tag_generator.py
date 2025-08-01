@@ -91,21 +91,24 @@ def generate_tags_and_buckets_from_json(url,json_data):
     # scraped_content = "\n".join([item['text'] for item in scraped_data])  # assuming 'text' is the field containing the content
     
     try:
-        json_preview = json.dumps(json_data[:20], indent=2)  # Safely preview a portion
+        json_preview = json.dumps(json_data[:80], indent=2)  # Safely preview a portion
     except Exception as e:
         logging.error(f"Error processing JSON: {e}")
         json_preview = "{}"
 
     # Define the prompt for Langchain
     prompt = f"""
-    I have scraped content from the website at {url}. Here is a list of content:
+   I have scraped content from the website at {url}. Here is a preview of the content:
+
     {json_preview}
 
-
-    For each piece of content, generate relevant tags and assign them to a bucket. 
+    For each piece of content, generate relevant tags and assign them to a bucket.
     Example buckets could be 'products', 'applications', 'services', 'industries', 'solutions', 'others', etc.
 
-    Provide the tags along with their corresponding bucket.
+    Provide the response in the following format:
+    tag: <tag_name> bucket: <bucket_name>
+
+    Do not provide any other text or formatting, just the tags and buckets.
     """
     
     # Generate tags and buckets using Langchain (OpenAI API)
