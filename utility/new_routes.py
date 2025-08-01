@@ -110,7 +110,7 @@ def process_scraping(url, chatbot_id, version_id):
         print("Website vector created")
 
         # Generate the tags and buckets
-        tags_and_buckets = generate_tags_and_buckets_from_json(url, json_data)
+        tags_and_buckets = generate_tags_and_buckets_from_json(url)
 
         # Parse the OpenAI output into a structured format
         tags_buckets = {}

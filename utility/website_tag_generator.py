@@ -86,14 +86,13 @@ def new_generate_tags_from_gpt(json_data):
         print("Error generating tags from GPT.")
         return {"error": str(e)}
     
-def generate_tags_and_buckets_from_json(url, scraped_data):
+def generate_tags_and_buckets_from_json(url):
     # Convert the scraped data into a format that can be passed to Langchain
     # scraped_content = "\n".join([item['text'] for item in scraped_data])  # assuming 'text' is the field containing the content
     
     # Define the prompt for Langchain
     prompt = f"""
-    I have scraped content from the website at {url}. Here is a list of content:
-    {scraped_data}
+    I have scraped content from the website at {url}. 
 
     For each piece of content, generate relevant tags and assign them to a bucket. 
     Example buckets could be 'products', 'applications', 'services', 'industries', 'solutions', 'others', etc.
