@@ -4,6 +4,10 @@ import logging
 import requests
 from bs4 import BeautifulSoup
 import re
+import os 
+from langchain.chat_models import ChatOpenAI
+from langchain.vectorstores import FAISS
+from langchain.embeddings import OpenAIEmbeddings
 
 # Optional: Enable logging
 logging.basicConfig(level=logging.INFO)
@@ -90,73 +94,51 @@ def new_generate_tags_from_gpt(json_data):
         return {"error": str(e)}
 
 # Function to validate URL
-def is_valid_url(url):
-    # Regex to check for valid URL format (including scheme)
-    regex = re.compile(
-        r'^(https?://)?'  # Allows optional "http://" or "https://"
-        r'(([A-Za-z0-9-]+\.)+[A-Za-z]{2,})'  # Domain
-        r'(:\d+)?'  # Optional port number
-        r'(\/[^\s]*)?'  # Optional path
-        r'$'
-    )
-    return re.match(regex, url) is not None
 
-def scrape_url(url):
-    """Function to scrape text content from the URL."""
+
+
+
+def generate_tags_and_buckets_from_json(chatbot_id, version_id):
+    # Set the FAISS index directory
+    faiss_index_dir = "/home/bramhesh_srivastav/platformdevelopment/faiss_indexes"
+    
+    # Define FAISS index filename based on chatbot_id and version_id
+    faiss_index_website = f"{chatbot_id}_{version_id}_faiss_index_website"
+    
+    # Construct the full path to the FAISS index file
+    faiss_path_website = os.path.join(faiss_index_dir, faiss_index_website)
+
+    # Load FAISS index for querying (using OpenAI embeddings here for illustration)
+    embeddings = OpenAIEmbeddings()
+    
+    # Load the FAISS index for querying
     try:
-        # Check if the URL is valid before scraping
-        if not is_valid_url(url):
-            raise ValueError(f"Invalid URL format: {url}")
-        
-        # If the URL is relative, prepend the base URL
-        if not url.startswith("http"):
-            url = "https://www.rishifibc.com" + url
-        
-        # Send HTTP request and scrape the content
-        response = requests.get(url)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, 'html.parser')
+        faiss_index = FAISS.load_local(faiss_path_website, embeddings)
+    except Exception as e:
+        logging.error(f"Error loading FAISS index: {e}")
+        return {"tags_and_buckets": {}, "error": "Failed to load FAISS index"}
 
-        # Example: Extracting title, headings, and first paragraph (you can adjust based on the structure of the webpage)
-        title = soup.title.text if soup.title else "No Title"
-        headings = [h.text for h in soup.find_all(['h1', 'h2', 'h3'])]
-        paragraphs = [p.text for p in soup.find_all('p')]
+    # Query the FAISS index to retrieve the most relevant content (e.g., title, headings, paragraphs)
+    try:
+        # Query FAISS index to fetch relevant document snippets (content)
+        result = faiss_index.similarity_search("Extract title, headings, and paragraphs", k=1)
 
-        content = {
-            "url": url,
-            "title": title,
-            "headings": headings,
-            "paragraphs": paragraphs[:5]  # Limiting to the first 5 paragraphs for brevity
-        }
+        # Assuming result contains the relevant content as text
+        extracted_content = result[0].page_content
 
-        return content
+        # Use the content to extract specific elements like title, headings, and paragraphs
+        # For simplicity, assuming extracted content is directly split or parsed
+        title = "Extracted Title"  # You can apply logic to extract the actual title
+        headings = ["Heading 1", "Heading 2", "Heading 3"]  # Example - parse headings from the content
+        paragraphs = extracted_content.split("\n")  # Example - split content into paragraphs
 
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error scraping {url}: {e}")
-        return {"url": url, "error": f"Request failed: {str(e)}"}
+    except Exception as e:
+        logging.error(f"Error querying FAISS index: {e}")
+        return {"tags_and_buckets": {}, "error": "Failed to query FAISS index"}
 
-    except ValueError as e:
-        logging.error(f"Error with URL format: {url} - {e}")
-        return {"url": url, "error": f"Invalid URL format: {str(e)}"}
-
-def generate_tags_and_buckets_from_json(url, json_data):
-    # Scrape content from the URL
-    if not is_valid_url(url):
-        return {"tags_and_buckets": {}, "error": "Invalid URL format."}
-
-    scraped_data = scrape_url(url)
-
-    if "error" in scraped_data:
-        return {"tags_and_buckets": {}, "error": scraped_data["error"]}
-
-    # Prepare the content for the prompt by formatting it as a preview
-    title = scraped_data.get("title", "No Title")
-    headings = ", ".join(scraped_data.get("headings", []))
-    paragraphs = "\n".join(scraped_data.get("paragraphs", []))
-
-    # Construct the Langchain prompt template
+    # Construct the Langchain prompt template with content from FAISS
     prompt_template = f"""
-    I have provided the following content extracted from a webpage:
+    I have the following content extracted from a webpage:
 
     Title: {title}
     Headings: {headings}
@@ -190,17 +172,15 @@ def generate_tags_and_buckets_from_json(url, json_data):
       }}
     }}
     """
-
+    
     # Initialize the LLM model
     llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
 
-    # Generate tags and categorize them based on the content from the URL
+    # Generate tags and categorize them based on the content extracted from the FAISS index
     try:
         result = llm.predict(prompt_template)
+        print("tags_and_buckets:", result)
         return {"tags_and_buckets": result}
     except Exception as e:
         logging.error(f"An error occurred during the prediction: {e}")
         return {"tags_and_buckets": {}, "error": str(e)}
-
-
-
