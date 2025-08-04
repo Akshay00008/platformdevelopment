@@ -117,12 +117,14 @@ def process_scraping(url, chatbot_id, version_id):
         # Generate the tags and buckets
         faisll_load=bots.load_faiss_index(chatbot_id,version_id,target_vector)
         print(faisll_load)
+
+        query = "Get the over all website content to create a catelogue based on website content like Tilte , description, keywords, etc "
         
 
         if not query or not chatbot_id or not version_id:
             return jsonify({"error": "query, chatbot_id, and version_id are required"}), 400
 
-        query = "Get the over all website content to create a catelogue based on website content like Tilte , description, keywords, etc "
+        
         top_chunks = bots.search_faiss(query,faisll_load)
         print("*****127777")
         extracted_content_text = bots.generate_tags_and_buckets_from_json(top_chunks)
