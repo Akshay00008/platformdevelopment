@@ -114,7 +114,7 @@ def scrape_url(url):
 
 def generate_tags_and_buckets_from_json(urls, json_data):
     # Scrape content from each URL
-    scraped_data = [scrape_url(url) for url in urls]
+    scraped_data = [scrape_url(url) for url in json_data]
 
     # Prepare the content for the prompt by formatting it as a preview
     try:
