@@ -139,7 +139,7 @@ def scrape_url(url):
         logging.error(f"Error with URL format: {url} - {e}")
         return {"url": url, "error": f"Invalid URL format: {str(e)}"}
 
-def generate_tags_and_buckets_from_url(url):
+def generate_tags_and_buckets_from_json(url):
     # Scrape content from the URL
     if not is_valid_url(url):
         return {"tags_and_buckets": {}, "error": "Invalid URL format."}
