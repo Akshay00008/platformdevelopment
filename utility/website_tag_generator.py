@@ -87,41 +87,48 @@ def new_generate_tags_from_gpt(json_data):
         return {"error": str(e)}
     
 def generate_tags_and_buckets_from_json(url, json_data):
+    try:
+        json_preview = json.dumps(json_data[:10], indent=2)  # Safely preview a portion
+    except Exception as e:
+        logging.error(f"Error processing JSON: {e}")
+        json_preview = "{}"  
     # Define the prompt template for Langchain
-    prompt_template = """
+    prompt_template = f"""
     I have provided a URL below. Please extract the main content from the webpage and generate relevant tags, categorizing them into appropriate buckets. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'Products', 'Applications', 'Services', 'Industries', 'Solutions', 'Others', etc.
 
     The output should be in the following JSON format:
-    {
-      "Catalogue Name 1": {
+    {{
+      "Catalogue Name 1": {{
         "Name 1": "Description of the concept, product, service, or industry.",
         "Name 2": "Description of the concept, product, service, or industry.",
         ...
-      },
-      "Catalogue Name 2": {
+      }},
+      "Catalogue Name 2": {{
         "Name 1": "Description of the concept, product, service, or industry.",
         "Name 2": "Description of the concept, product, service, or industry.",
         ...
-      },
+      }},
       ...
-    }
+    }}
 
     Here is an example format of the JSON output:
-    {
-      "Industries": {
+    {{
+      "Industries": {{
         "Semiconductor": "The semiconductor industry involves the design and fabrication of microchips used in various devices.",
         "Surface Finishing": "Surface finishing refers to processes that improve the appearance, durability, and wear resistance of materials."
-      },
-      "Products": {
+      }},
+      "Products": {{
         "XYZ Product": "A high-performance product designed to meet the needs of modern manufacturing."
-      },
-      "Solutions": {
+      }},
+      "Solutions": {{
         "Cloud-based Solution": "A scalable solution that enables businesses to migrate their operations to the cloud."
-      }
-    }
+      }}
+    }}
 
     The URL to extract content from is: {url}
 
+    Here's a preview of the unstructured content that can be used to generate tags and categories:
+    {json_preview}
     """
 
     # Format the prompt with the provided URL
