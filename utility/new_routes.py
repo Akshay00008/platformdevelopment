@@ -113,9 +113,9 @@ def process_scraping(url, chatbot_id, version_id):
 
         # # ✅ Only mark thread done if all succeed
         # mark_thread_done()
-
+        target_vector='website'
         # Generate the tags and buckets
-        faisll_load=bots.load_faiss_index(chatbot_id,version_id)
+        faisll_load=bots.load_faiss_index(chatbot_id,version_id,target_vector)
         print(faisll_load)
         
 

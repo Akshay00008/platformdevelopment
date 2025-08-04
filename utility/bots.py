@@ -53,6 +53,8 @@ def load_faiss_index(chatbot_id, version_id, target_vector):
     # Construct the full path to the FAISS index
     faiss_path_1 = os.path.join(faiss_index_dir, faiss_index_filename)    
     faiss_path_2 = os.path.join(faiss_index_dir, faiss_index_website) 
+
+    
     try:
         # Define the FAISS index path based on the vector type
         if 'faq' in target_vector:
