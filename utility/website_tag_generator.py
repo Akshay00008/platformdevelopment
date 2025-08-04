@@ -93,6 +93,9 @@ def generate_tags_and_buckets_from_json(url, json_data):
         logging.error(f"Error processing JSON: {e}")
         json_preview = "{}"  
     # Define the prompt template for Langchain
+    logging.info(f"Preview of JSON data:\n{json_preview}")
+
+    # Define the prompt template for Langchain
     prompt_template = f"""
     I have provided a URL below. Please extract the main content from the webpage and generate relevant tags, categorizing them into appropriate buckets. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'Products', 'Applications', 'Services', 'Industries', 'Solutions', 'Others', etc.
 
@@ -130,7 +133,6 @@ def generate_tags_and_buckets_from_json(url, json_data):
     Here's a preview of the unstructured content that can be used to generate tags and categories:
     {json_preview}
     """
-
     # Format the prompt with the provided URL
     prompt = prompt_template.format(url=url)
     
