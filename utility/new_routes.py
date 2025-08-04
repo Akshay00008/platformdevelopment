@@ -109,6 +109,11 @@ def process_scraping(url, chatbot_id, version_id):
         embeddings_from_website_content(json_data, chatbot_id, version_id)
         print("Website vector created")
 
+        loggs.info(f"Tags and vectors generated for URL: {url}")
+
+        # ✅ Only mark thread done if all succeed
+        mark_thread_done()
+
         # Generate the tags and buckets
     #     tags_and_buckets = generate_tags_and_buckets_from_json(url,json_data)
 
