@@ -115,31 +115,26 @@ def process_scraping(url, chatbot_id, version_id):
         # mark_thread_done()
 
         # Generate the tags and buckets
-        tags_and_buckets = generate_tags_and_buckets_from_json(url,json_data)
+        faisll_load=bots.load_faiss_index(chatbot_id,version_id)
+        print(faisll_load)
+        
 
-        # Parse the OpenAI output into a structured format
-        tags_buckets = {}
-        for line in tags_and_buckets.split('\n'):
-            if ':' in line:
-                tag, bucket = line.split(':')
-                tags_buckets[tag.strip()] = bucket.strip()
-        print(tags_buckets)
-       
-        # Prepare JSON output
-        json_data = {
-            'tags_and_buckets': tags_buckets
-        }
+        if not query or not chatbot_id or not version_id:
+            return jsonify({"error": "query, chatbot_id, and version_id are required"}), 400
 
-        # Print the JSON result
-        json_output = json.dumps(json_data, indent=4)
-        print("****129*********")
-        print(json_output)
+        query = "Get the over all website content to create a catelogue based on website content like Tilte , description, keywords, etc "
+        top_chunks = bots.search_faiss(query,faisll_load)
+        print("*****127777")
+        extracted_content_text = bots.generate_tags_and_buckets_from_json(top_chunks)
+
+        print(extracted_content_text)
+        # extracted_faqs = bots.parse_faq_text(extracted_content_text)
       
 
-    #     loggs.info(f"Tags and vectors generated for URL: {url}")
+        loggs.info(f"Tags and vectors generated for URL: {url}")
 
-    #     # ✅ Only mark thread done if all succeed
-    #     mark_thread_done()
+        # ✅ Only mark thread done if all succeed
+        mark_thread_done()
 
     except Exception as e:
         loggs.info(f"Error during background scraping: {str(e)}")

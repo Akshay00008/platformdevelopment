@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import pymongo
 import re
 from bson import ObjectId
-
+import logging
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from openai import OpenAI
@@ -195,3 +195,65 @@ def save_faqs_to_mongo(faq_list, chatbot_id, version_id):
     result = collection.insert_many(faq_list)
     print(f"Inserted {len(result.inserted_ids)} FAQs into MongoDB.")
     return len(result.inserted_ids)
+
+def generate_tags_and_buckets_from_json(chunks, target_count=50):
+    # Join the first 30 chunks of content to form the input for the prompt
+    joined_chunks = "\n\n".join(chunks[:30])
+
+    # Construct the Langchain prompt template with content from FAISS
+    prompt = f"""
+    I have the following content extracted from a webpage:
+
+    {joined_chunks}
+
+    Please generate relevant tags based on this content, categorizing them into appropriate buckets. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'Products', 'Applications', 'Services', 'Industries', 'Solutions', 'Others', etc.
+
+    The output should be in the following JSON format:
+    {{
+      "Catalogue Name 1": {{
+        "Name 1": "Description of the concept, product, service, or industry.",
+        "Name 2": "Description of the concept, product, service, or industry."
+      }},
+      "Catalogue Name 2": {{
+        "Name 1": "Description of the concept, product, service, or industry.",
+        "Name 2": "Description of the concept, product, service, or industry."
+      }}
+    }}
+
+    Here is an example format of the JSON output:
+    {{
+      "Industries": {{
+        "Semiconductor": "The semiconductor industry involves the design and fabrication of microchips used in various devices.",
+        "Surface Finishing": "Surface finishing refers to processes that improve the appearance, durability, and wear resistance of materials."
+      }},
+      "Products": {{
+        "XYZ Product": "A high-performance product designed to meet the needs of modern manufacturing."
+      }},
+      "Solutions": {{
+        "Cloud-based Solution": "A scalable solution that enables businesses to migrate their operations to the cloud."
+      }}
+    }}
+    """
+
+    # Initialize the LLM model
+    response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+        )
+    category = response.choices[0].message.content.strip()
+
+    # Try to generate tags and categorize them
+    try:
+        
+
+        # Log the result for debugging purposes
+        print("tags_and_buckets:", category)
+
+        # Return the result as a dictionary
+        return {"tags_and_buckets": category}
+    
+    except Exception as e:
+        # Log error if an exception occurs during the prediction
+        logging.error(f"An error occurred during the prediction: {e}")
+        return {"tags_and_buckets": {}, "error": str(e)}
