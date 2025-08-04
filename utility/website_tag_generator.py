@@ -3,6 +3,8 @@ import json
 import logging
 import requests
 from bs4 import BeautifulSoup
+import re
+
 # Optional: Enable logging
 logging.basicConfig(level=logging.INFO)
 
@@ -87,9 +89,30 @@ def new_generate_tags_from_gpt(json_data):
         print("Error generating tags from GPT.")
         return {"error": str(e)}
 
+# Function to validate URL
+def is_valid_url(url):
+    # Regex to check for valid URL format (including scheme)
+    regex = re.compile(
+        r'^(https?://)?'  # Allows optional "http://" or "https://"
+        r'(([A-Za-z0-9-]+\.)+[A-Za-z]{2,})'  # Domain
+        r'(:\d+)?'  # Optional port number
+        r'(\/[^\s]*)?'  # Optional path
+        r'$'
+    )
+    return re.match(regex, url) is not None
+
 def scrape_url(url):
     """Function to scrape text content from the URL."""
     try:
+        # Check if the URL is valid before scraping
+        if not is_valid_url(url):
+            raise ValueError(f"Invalid URL format: {url}")
+        
+        # If the URL is relative, prepend the base URL
+        if not url.startswith("http"):
+            url = "https://www.rishifibc.com" + url
+        
+        # Send HTTP request and scrape the content
         response = requests.get(url)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -108,27 +131,38 @@ def scrape_url(url):
 
         return content
 
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         logging.error(f"Error scraping {url}: {e}")
-        return {"url": url, "error": str(e)}
+        return {"url": url, "error": f"Request failed: {str(e)}"}
 
-def generate_tags_and_buckets_from_json(urls, json_data):
-    # Scrape content from each URL
-    scraped_data = [scrape_url(url) for url in json_data]
+    except ValueError as e:
+        logging.error(f"Error with URL format: {url} - {e}")
+        return {"url": url, "error": f"Invalid URL format: {str(e)}"}
+
+def generate_tags_and_buckets_from_url(url):
+    # Scrape content from the URL
+    if not is_valid_url(url):
+        return {"tags_and_buckets": {}, "error": "Invalid URL format."}
+
+    scraped_data = scrape_url(url)
+
+    if "error" in scraped_data:
+        return {"tags_and_buckets": {}, "error": scraped_data["error"]}
 
     # Prepare the content for the prompt by formatting it as a preview
-    try:
-        json_preview = json.dumps(scraped_data[:10], indent=2)  # Preview the first 10 items
-    except Exception as e:
-        logging.error(f"Error processing JSON: {e}")
-        json_preview = "{}"  # In case of error, provide an empty preview
-
-    # Log the preview of the scraped data
-    logging.info(f"Preview of scraped data:\n{json_preview}")
+    title = scraped_data.get("title", "No Title")
+    headings = ", ".join(scraped_data.get("headings", []))
+    paragraphs = "\n".join(scraped_data.get("paragraphs", []))
 
     # Construct the Langchain prompt template
     prompt_template = f"""
-    I have provided a list of URLs below. Please extract the main content from each webpage and generate relevant tags, categorizing them into appropriate buckets. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'Products', 'Applications', 'Services', 'Industries', 'Solutions', 'Others', etc.
+    I have provided the following content extracted from a webpage:
+
+    Title: {title}
+    Headings: {headings}
+    Paragraphs: {paragraphs}
+
+    Please generate relevant tags based on this content, categorizing them into appropriate buckets. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'Products', 'Applications', 'Services', 'Industries', 'Solutions', 'Others', etc.
 
     The output should be in the following JSON format:
     {{
@@ -155,36 +189,18 @@ def generate_tags_and_buckets_from_json(urls, json_data):
         "Cloud-based Solution": "A scalable solution that enables businesses to migrate their operations to the cloud."
       }}
     }}
-
-    Below is the preview of the scraped content from the URLs provided:
-    {json_preview}
     """
-
-    logging.info(f"Prompt sent to model: {prompt_template[:500]}")  # Only log a snippet to avoid too much data
 
     # Initialize the LLM model
     llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
 
-    # Generate tags and categorize them based on the content from the URLs and the previewed JSON data
+    # Generate tags and categorize them based on the content from the URL
     try:
         result = llm.predict(prompt_template)
-        logging.info(f"Generated result: {result[:500]}")  # Log a snippet of the result for debugging
-        return result
+        return {"tags_and_buckets": result}
     except Exception as e:
         logging.error(f"An error occurred during the prediction: {e}")
-        return None
-
-# # Example: Your scraped data in JSON format
-# scraped_data = [
-#     {"text": "Inline heaters for industrial applications."},
-#     {"text": "Chemical heating solutions for energy efficiency."},
-#     {"text": "Innovative thermal systems to improve energy usage."},
-#     {"text": "Industrial heating for process heating applications."},
-#     {"text": "Solutions for energy savings in manufacturing."}
-# ]
-
-# url = 'https://www.processtechnology.com/'
-
+        return {"tags_and_buckets": {}, "error": str(e)}
 
 
 
