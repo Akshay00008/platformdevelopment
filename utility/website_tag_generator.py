@@ -129,7 +129,7 @@ The output should be in the following JSON format:
     # Generate tags and buckets using Langchain (OpenAI API)
     llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
     result = llm.predict(prompt)
-
+    print (result)
     return result
 
 # # Example: Your scraped data in JSON format
