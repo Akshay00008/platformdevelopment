@@ -127,7 +127,7 @@ def process_scraping(url, chatbot_id, version_id):
         
         top_chunks = bots.search_faiss(query,faisll_load)
         print("*****127777")
-        extracted_content_text = bots.generate_tags_and_buckets_from_json(top_chunks)
+        extracted_content_text = bots.generate_tags_and_buckets_from_json(top_chunks,chatbot_id,version_id)
 
         print(extracted_content_text)
         # extracted_faqs = bots.parse_faq_text(extracted_content_text)
