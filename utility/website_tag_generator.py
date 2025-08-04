@@ -86,52 +86,58 @@ def new_generate_tags_from_gpt(json_data):
         print("Error generating tags from GPT.")
         return {"error": str(e)}
     
-def generate_tags_and_buckets_from_json(url,json_data):
-    # Convert the scraped data into a format that can be passed to Langchain
-    # scraped_content = "\n".join([item['text'] for item in scraped_data])  # assuming 'text' is the field containing the content
-    
-    # Define the prompt for Langchain
-    prompt = f"""
-  I have provided a URL below. Please extract the main content from the webpage and generate relevant tags, categorizing them into appropriate buckets. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'Products', 'Applications', 'Services', 'Industries', 'Solutions', 'Others', etc.
+def generate_tags_and_buckets_from_json(url, json_data):
+    # Define the prompt template for Langchain
+    prompt_template = """
+    I have provided a URL below. Please extract the main content from the webpage and generate relevant tags, categorizing them into appropriate buckets. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'Products', 'Applications', 'Services', 'Industries', 'Solutions', 'Others', etc.
 
-The output should be in the following JSON format:
-{
-  "Catalogue Name 1": {
-    "Name 1": "Description of the concept, product, service, or industry.",
-    "Name 2": "Description of the concept, product, service, or industry.",
-    ...
-  },
-  "Catalogue Name 2": {
-    "Name 1": "Description of the concept, product, service, or industry.",
-    "Name 2": "Description of the concept, product, service, or industry.",
-    ...
-  },
-  ...
-}
+    The output should be in the following JSON format:
+    {
+      "Catalogue Name 1": {
+        "Name 1": "Description of the concept, product, service, or industry.",
+        "Name 2": "Description of the concept, product, service, or industry.",
+        ...
+      },
+      "Catalogue Name 2": {
+        "Name 1": "Description of the concept, product, service, or industry.",
+        "Name 2": "Description of the concept, product, service, or industry.",
+        ...
+      },
+      ...
+    }
 
+    Here is an example format of the JSON output:
+    {
+      "Industries": {
+        "Semiconductor": "The semiconductor industry involves the design and fabrication of microchips used in various devices.",
+        "Surface Finishing": "Surface finishing refers to processes that improve the appearance, durability, and wear resistance of materials."
+      },
+      "Products": {
+        "XYZ Product": "A high-performance product designed to meet the needs of modern manufacturing."
+      },
+      "Solutions": {
+        "Cloud-based Solution": "A scalable solution that enables businesses to migrate their operations to the cloud."
+      }
+    }
 
-{
-  "Industries": {
-    "Semiconductor": "The semiconductor industry involves the design and fabrication of microchips used in various devices.",
-    "Surface Finishing": "Surface finishing refers to processes that improve the appearance, durability, and wear resistance of materials."
-  },
-  "Products": {
-    "XYZ Product": "A high-performance product designed to meet the needs of modern manufacturing."
-  },
-  "Solutions": {
-    "Cloud-based Solution": "A scalable solution that enables businesses to migrate their operations to the cloud."
-  }
-}
-
+    The URL to extract content from is: {url}
 
     """
-    
-    # Generate tags and buckets using Langchain (OpenAI API)
-    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
-    result = llm.predict(prompt)
-    print (result)
-    return result
 
+    # Format the prompt with the provided URL
+    prompt = prompt_template.format(url=url)
+    
+    # Initialize the LLM model
+    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+
+    # Generate tags and categorize them based on the content from the URL
+    try:
+        result = llm.predict(prompt)
+        print(result)  # You can log the result for debugging
+        return result
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
 # # Example: Your scraped data in JSON format
 # scraped_data = [
 #     {"text": "Inline heaters for industrial applications."},
