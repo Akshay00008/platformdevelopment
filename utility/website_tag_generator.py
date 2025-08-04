@@ -92,14 +92,37 @@ def generate_tags_and_buckets_from_json(url,json_data):
     
     # Define the prompt for Langchain
     prompt = f"""
-    I have provided a URL below. Please extract the main content from the webpage and generate relevant tags and assign each tag to a specific bucket. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'products', 'applications', 'services', 'industries', 'solutions', 'others', etc.
+  I have provided a URL below. Please extract the main content from the webpage and generate relevant tags, categorizing them into appropriate buckets. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'Products', 'Applications', 'Services', 'Industries', 'Solutions', 'Others', etc.
 
-Provide the result in the following format:
+The output should be in the following JSON format:
+{
+  "Catalogue Name 1": {
+    "Name 1": "Description of the concept, product, service, or industry.",
+    "Name 2": "Description of the concept, product, service, or industry.",
+    ...
+  },
+  "Catalogue Name 2": {
+    "Name 1": "Description of the concept, product, service, or industry.",
+    "Name 2": "Description of the concept, product, service, or industry.",
+    ...
+  },
+  ...
+}
 
-tag: <tag_name> bucket: <bucket_name>
 
-Here is the URL to extract content from:
-  {url}
+{
+  "Industries": {
+    "Semiconductor": "The semiconductor industry involves the design and fabrication of microchips used in various devices.",
+    "Surface Finishing": "Surface finishing refers to processes that improve the appearance, durability, and wear resistance of materials."
+  },
+  "Products": {
+    "XYZ Product": "A high-performance product designed to meet the needs of modern manufacturing."
+  },
+  "Solutions": {
+    "Cloud-based Solution": "A scalable solution that enables businesses to migrate their operations to the cloud."
+  }
+}
+
 
     """
     
