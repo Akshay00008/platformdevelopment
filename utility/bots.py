@@ -198,9 +198,13 @@ def save_faqs_to_mongo(faq_list, chatbot_id, version_id):
     print(f"Inserted {len(result.inserted_ids)} FAQs into MongoDB.")
     return len(result.inserted_ids)
 
-def generate_tags_and_buckets_from_json(chunks, target_count=50):
+def generate_tags_and_buckets_from_json(chunks, chatbot_id, version_id, target_count=50):
     # Join the first 30 chunks of content to form the input for the prompt
     joined_chunks = "\n\n".join(chunks[:30])
+
+    collection = db['faqs']
+    chatbot_oid = ObjectId(chatbot_id)
+    version_oid = ObjectId(version_id)
 
     # Construct the Langchain prompt template with content from FAISS
     prompt = f"""
@@ -251,6 +255,16 @@ def generate_tags_and_buckets_from_json(chunks, target_count=50):
 
         # Log the result for debugging purposes
         print("tags_and_buckets:", category)
+
+        document = {
+            
+            "chatbot_id": chatbot_id,
+            "version_id": version_id,
+            "Catalogue": category
+        }
+
+
+        result = collection.insert_one(document)
 
         # Return the result as a dictionary
         return {"tags_and_buckets": category}
