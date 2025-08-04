@@ -1,7 +1,8 @@
 from langchain_openai import ChatOpenAI
 import json
 import logging
-
+import requests
+from bs4 import BeautifulSoup
 # Optional: Enable logging
 logging.basicConfig(level=logging.INFO)
 
@@ -85,33 +86,60 @@ def new_generate_tags_from_gpt(json_data):
         logging.exception("Error generating tags from GPT.")
         print("Error generating tags from GPT.")
         return {"error": str(e)}
-    
-def generate_tags_and_buckets_from_json(url, json_data):
+
+def scrape_url(url):
+    """Function to scrape text content from the URL."""
     try:
-        json_preview = json.dumps(json_data[:10], indent=2)  # Safely preview a portion
+        response = requests.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Example: Extracting title, headings, and first paragraph (you can adjust based on the structure of the webpage)
+        title = soup.title.text if soup.title else "No Title"
+        headings = [h.text for h in soup.find_all(['h1', 'h2', 'h3'])]
+        paragraphs = [p.text for p in soup.find_all('p')]
+
+        content = {
+            "url": url,
+            "title": title,
+            "headings": headings,
+            "paragraphs": paragraphs[:5]  # Limiting to the first 5 paragraphs for brevity
+        }
+
+        return content
+
+    except Exception as e:
+        logging.error(f"Error scraping {url}: {e}")
+        return {"url": url, "error": str(e)}
+
+def generate_tags_and_buckets_from_json(urls, json_data):
+    # Scrape content from each URL
+    scraped_data = [scrape_url(url) for url in urls]
+
+    # Prepare the content for the prompt by formatting it as a preview
+    try:
+        json_preview = json.dumps(scraped_data[:10], indent=2)  # Preview the first 10 items
     except Exception as e:
         logging.error(f"Error processing JSON: {e}")
-        json_preview = "{}"  
-    # Define the prompt template for Langchain
-    logging.info(f"Preview of JSON data:\n{json_preview}")
+        json_preview = "{}"  # In case of error, provide an empty preview
 
-    # Define the prompt template for Langchain
+    # Log the preview of the scraped data
+    logging.info(f"Preview of scraped data:\n{json_preview}")
+
+    # Construct the Langchain prompt template
     prompt_template = f"""
-    I have provided a URL below. Please extract the main content from the webpage and generate relevant tags, categorizing them into appropriate buckets. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'Products', 'Applications', 'Services', 'Industries', 'Solutions', 'Others', etc.
+    I have provided a list of URLs below. Please extract the main content from each webpage and generate relevant tags, categorizing them into appropriate buckets. The tags should describe key topics, products, services, or concepts mentioned on the page, and each tag should be categorized into a relevant bucket. Example buckets could be 'Products', 'Applications', 'Services', 'Industries', 'Solutions', 'Others', etc.
 
     The output should be in the following JSON format:
     {{
       "Catalogue Name 1": {{
         "Name 1": "Description of the concept, product, service, or industry.",
-        "Name 2": "Description of the concept, product, service, or industry.",
-        ...
+        "Name 2": "Description of the concept, product, service, or industry."
       }},
       "Catalogue Name 2": {{
         "Name 1": "Description of the concept, product, service, or industry.",
-        "Name 2": "Description of the concept, product, service, or industry.",
-        ...
-      }},
-      ...
+        "Name 2": "Description of the concept, product, service, or industry."
+      }}
     }}
 
     Here is an example format of the JSON output:
@@ -128,25 +156,24 @@ def generate_tags_and_buckets_from_json(url, json_data):
       }}
     }}
 
-    The URL to extract content from is: {url}
-
-    Here's a preview of the unstructured content that can be used to generate tags and categories:
+    Below is the preview of the scraped content from the URLs provided:
     {json_preview}
     """
-    # Format the prompt with the provided URL
-    prompt = prompt_template.format(url=url)
-    
+
+    logging.info(f"Prompt sent to model: {prompt_template[:500]}")  # Only log a snippet to avoid too much data
+
     # Initialize the LLM model
     llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
 
-    # Generate tags and categorize them based on the content from the URL
+    # Generate tags and categorize them based on the content from the URLs and the previewed JSON data
     try:
-        result = llm.predict(prompt)
-        print(result)  # You can log the result for debugging
+        result = llm.predict(prompt_template)
+        logging.info(f"Generated result: {result[:500]}")  # Log a snippet of the result for debugging
         return result
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.error(f"An error occurred during the prediction: {e}")
         return None
+
 # # Example: Your scraped data in JSON format
 # scraped_data = [
 #     {"text": "Inline heaters for industrial applications."},
