@@ -202,7 +202,7 @@ def generate_tags_and_buckets_from_json(chunks, chatbot_id, version_id, target_c
     # Join the first 30 chunks of content to form the input for the prompt
     joined_chunks = "\n\n".join(chunks[:30])
 
-    collection = db['faqs']
+    collection = db['catelogue']
     chatbot_oid = ObjectId(chatbot_id)
     version_oid = ObjectId(version_id)
 
@@ -258,8 +258,8 @@ def generate_tags_and_buckets_from_json(chunks, chatbot_id, version_id, target_c
 
         document = {
             
-            "chatbot_id": chatbot_id,
-            "version_id": version_id,
+            "chatbot_id": chatbot_oid,
+            "version_id": version_oid,
             "Catalogue": category
         }
 
