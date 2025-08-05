@@ -24,7 +24,8 @@ def extract_playlist_id_from_url(playlist_url):
         raise ValueError("Invalid playlist URL")
 
 def extract_and_store_descriptions(playlist_url, chatbot_id, version_id,inserted_count=0):
-   youtube = build('youtube', 'v3', developerKey=API_KEY)
+   youtube = build('youtube', 'v3', developerKey=API_KEY, cache_discovery=False)
+
 
     # Get the playlist ID directly from the URL
    playlist_id = playlist_url.split("list=")[1].split("&")[0]  # Extract playlist ID from the URL
