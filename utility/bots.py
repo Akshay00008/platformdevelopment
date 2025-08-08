@@ -250,12 +250,12 @@ def generate_tags_and_buckets_from_json(chunks, chatbot_id, version_id, target_c
         )
     category = response.choices[0].message.content.strip()
 
-    json_str_match = re.search(r"```json\s*(\{.*\})\s*```")
+    json_str_match = re.search(r"``````", category, re.DOTALL)
     if json_str_match:
         json_str = json_str_match.group(1)
     else:
-    # Fallback if no triple backticks found, assume entire content is JSON
         json_str = category
+       
 
     try:
     # Parse string to Python dict
