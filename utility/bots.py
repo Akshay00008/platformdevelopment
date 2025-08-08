@@ -7,6 +7,7 @@ import logging
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from openai import OpenAI
+import json
 
 # Load env variables
 load_dotenv()
@@ -249,18 +250,39 @@ def generate_tags_and_buckets_from_json(chunks, chatbot_id, version_id, target_c
         )
     category = response.choices[0].message.content.strip()
 
+    json_str_match = re.search(r"```json\s*(\{.*\})\s*```")
+    if json_str_match:
+        json_str = json_str_match.group(1)
+    else:
+    # Fallback if no triple backticks found, assume entire content is JSON
+        json_str = category
+
+    try:
+    # Parse string to Python dict
+        category_obj = json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print("Failed to parse JSON:", e)
+        category_obj = {}  # Or handle error accordingly
+    try:
+        # Parse string to Python dict
+        category_obj = json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print("Failed to parse JSON:", e)
+        category_obj = {}  # Or handle error accordingly
+
+    print("tags_and_buckets:", category_obj)
     # Try to generate tags and categorize them
     try:
         
 
         # Log the result for debugging purposes
-        print("tags_and_buckets:", category)
+        print("tags_and_buckets:", category_obj)
 
         document = {
             
             "chatbot_id": chatbot_oid,
             "version_id": version_oid,
-            "Catalogue": category
+            "Catalogue": category_obj
         }
 
 
