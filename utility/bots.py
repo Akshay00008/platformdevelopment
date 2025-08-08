@@ -199,6 +199,12 @@ def save_faqs_to_mongo(faq_list, chatbot_id, version_id):
     print(f"Inserted {len(result.inserted_ids)} FAQs into MongoDB.")
     return len(result.inserted_ids)
 
+import json
+import re
+import logging
+from bson import ObjectId
+from pymongo import MongoClient
+
 def generate_tags_and_buckets_from_json(chunks, chatbot_id, version_id, target_count=50):
     # Join the first 30 chunks of content to form the input for the prompt
     joined_chunks = "\n\n".join(chunks[:30])
@@ -250,19 +256,13 @@ def generate_tags_and_buckets_from_json(chunks, chatbot_id, version_id, target_c
         )
     category = response.choices[0].message.content.strip()
 
-    json_str_match = re.search(r"``````", category, re.DOTALL)
+    # Extract JSON from the response string by looking for the JSON block
+    json_str_match = re.search(r"```json\n(.*?)\n```", category, re.DOTALL)
     if json_str_match:
         json_str = json_str_match.group(1)
     else:
-        json_str = category
-       
+        json_str = category  # If not found, use the entire response
 
-    try:
-    # Parse string to Python dict
-        category_obj = json.loads(json_str)
-    except json.JSONDecodeError as e:
-        print("Failed to parse JSON:", e)
-        category_obj = {}  # Or handle error accordingly
     try:
         # Parse string to Python dict
         category_obj = json.loads(json_str)
@@ -270,26 +270,21 @@ def generate_tags_and_buckets_from_json(chunks, chatbot_id, version_id, target_c
         print("Failed to parse JSON:", e)
         category_obj = {}  # Or handle error accordingly
 
+    # Log the result for debugging purposes
     print("tags_and_buckets:", category_obj)
+
     # Try to generate tags and categorize them
     try:
-        
-
-        # Log the result for debugging purposes
-        print("tags_and_buckets:", category_obj)
-
         document = {
-            
             "chatbot_id": chatbot_oid,
             "version_id": version_oid,
             "Catalogue": category_obj
         }
 
-
         result = collection.insert_one(document)
 
         # Return the result as a dictionary
-        return {"tags_and_buckets": category}
+        return {"tags_and_buckets": category_obj}
     
     except Exception as e:
         # Log error if an exception occurs during the prediction
