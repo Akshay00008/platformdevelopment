@@ -300,14 +300,12 @@ def translate_welcome_message(message: str, lang: str) -> str:
     prompt = f"You are an agent that converts the given welcome message: \"{message}\" into the required language: {lang}. Make it sound natural and welcoming."
 
     try:
-        response = client.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are a professional hospitality and greeting translator."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
         )
+        translated_message = response.choices[0].message.content.strip()
 
         translated_message = response.choices[0].message["content"].strip()
         return translated_message
