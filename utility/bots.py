@@ -307,7 +307,7 @@ def translate_welcome_message(message: str, lang: str) -> str:
         )
         translated_message = response.choices[0].message.content.strip()
 
-        translated_message = response.choices[0].message["content"].strip()
+        
         return translated_message
 
     except Exception as e:
