@@ -435,6 +435,15 @@ def retrain_bot():
     return merged_result
 
 
+@app.route("/welcome message", methods=["POST"], strict_slashes=False)
+def welcome_message():
+    data = request.get_json()
+    message = data.get("message")
+    lang = data.get("lang")
+
+    translate=bots.translate_welcome_message(message,lang)
+
+    return {"message": translate} 
 
 
 
