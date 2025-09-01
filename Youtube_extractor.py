@@ -9,7 +9,8 @@ API_KEY = os.getenv('YOUTUBE_API_KEY')
 
 # Configure your MongoDB client and database
 client = MongoClient("mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017")  # Update connection string if needed
-db = client['ChatbotDB']  # DB name
+db = client['ChatbotDB-DEV']  # DB name  
+
 collection = db['videos']  # Collection name
 
 
