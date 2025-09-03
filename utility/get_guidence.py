@@ -4,7 +4,7 @@ import pprint
 
 # MongoDB connection
 mongo_client = pymongo.MongoClient("mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017")
-db = mongo_client["ChatbotDB-DEV"]
+db = mongo_client["ChatbotDB-Backup"]
 
 # Collections
 guidance_collection = db["guidanceflows"]
