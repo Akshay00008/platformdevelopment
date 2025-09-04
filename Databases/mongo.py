@@ -5,7 +5,7 @@ import json
 
 def Bot_Retrieval(chatbot_id, version_id):
     client = pymongo.MongoClient("mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017")
-    db = client["ChatbotDB-Backup"]
+    db = client["ChatbotDB-DEV"]
     collection = db['chatbotversions']
     
     # If your IDs are ObjectId in MongoDB, convert strings to ObjectId

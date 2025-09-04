@@ -19,7 +19,7 @@ embedding_model = OpenAIEmbeddings(model="text-embedding-3-large")
 
 # MongoDB connection
 mongo_client = pymongo.MongoClient("mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017")
-db = mongo_client["ChatbotDB-Backup"]
+db = mongo_client["ChatbotDB-DEV"]
 guidance_collection = db["guidanceflows"]
 
 # Function to load FAISS index fresh every time

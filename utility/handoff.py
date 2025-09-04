@@ -12,7 +12,7 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # MongoDB Setup
 mongo_client = pymongo.MongoClient("mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017")
-db = mongo_client["ChatbotDB-Backup"]
+db = mongo_client["ChatbotDB-DEV"]
 collection = db['handoffscenarios']
 
 # FAISS and Embedding Model Setup

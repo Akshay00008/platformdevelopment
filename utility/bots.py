@@ -21,7 +21,7 @@ embedding_model = OpenAIEmbeddings(model="text-embedding-3-large")
 
 # MongoDB setup
 mongo_client = pymongo.MongoClient("mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017")
-db = mongo_client["ChatbotDB-Backup"]
+db = mongo_client["ChatbotDB-DEV"]
 collection = db['faqs']
 
 # faiss_path_1 = r"/home/bramhesh_srivastav/Platform_DataScience/faiss_index"#C:\\Users\\hp\\Desktop\\Platform_16-05-2025\\Platform_DataScience\\faiss_index"#"/home/bramhesh_srivastav/Platform_DataScience/faiss_index"

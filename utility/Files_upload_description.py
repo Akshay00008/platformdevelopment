@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 
 # MongoDB setup
 mongo_client = pymongo.MongoClient("mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017")
-db = mongo_client["ChatbotDB-Backup"]
+db = mongo_client["ChatbotDB-DEV"]
 collection = db['files']
 
 # Load environment variables from .env file
@@ -72,7 +72,7 @@ def generate_openai_output(text):
 # Function to read PDFs from GCS and extract text
 # MongoDB setup
 mongo_client = pymongo.MongoClient("mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017")
-db = mongo_client["ChatbotDB-Backup"]
+db = mongo_client["ChatbotDB-DEV"]
 collection = db['files']
 
 def read_pdf_from_gcs(bucket_name, blob_names, chatbot_id, version_id):
