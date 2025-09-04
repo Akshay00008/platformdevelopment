@@ -5,6 +5,8 @@ langchain-openai
 langchain-core
 langchain-experimental
 langgraph
+langchain-cli
+
 
 # Vector stores
 faiss-cpu   # or faiss-gpu, depending on your setup
