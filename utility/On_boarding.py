@@ -74,11 +74,13 @@ def chatbot(chatbot_id, version_id, prompt, user_id):
 
         Bot_information = Bot_Retrieval(chatbot_id, version_id)
         if not Bot_information:
-            raise ValueError(f"No bot information found for chatbot_id {chatbot_id} and version_id {version_id}")
+            pass
+           
 
         bot_company = company_Retrieval()
         if not bot_company:
-            raise ValueError(f"No bot company information found")
+            pass
+        # return "No company information found."
 
         # Initialize conversation history if needed
         if user_id not in converstation_state:
@@ -88,10 +90,19 @@ def chatbot(chatbot_id, version_id, prompt, user_id):
         converstation_state[user_id].append({'role': 'user', 'content': prompt})
 
         greeting = Bot_information[0].get('greeting_message', "Hello!")
-        purpose = Bot_information[0].get('purpose', "General assistance")
+        
+        purpose = Bot_information[0].get('purpose', "You are an AI assistant helping users with their queries on behalf of the organization. "
+    "You provide clear and helpful responses while avoiding personal details (such as name, age, birth information, or contact info) "
+    "and sensitive transactional data (such as order details, delivery details, or payment information")
+        
         languages = Bot_information[0].get('supported_languages', ["English"])
+
         tone_and_style = Bot_information[0].get('tone_style', "Friendly and professional")
-        company_info = bot_company[0].get('bot_company')
+        
+        company_info = bot_company[0].get('bot_company', " You are an AI assistant representing the organization. "
+    "Your task is to help customers with their needs and guide them with relevant information about the organization's services, "
+    "without disclosing personal user data or sensitive company records.")
+        
         print("Received bot info")
 
         # First check if we have a cached LLM response for this user, bot, version, and prompt
