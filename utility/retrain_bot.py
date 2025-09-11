@@ -50,14 +50,14 @@ def fetch_data(request_body):
         guidance_data = list(guidance_collection.find(query, {
             "_id": 0,
             "section_title": 1,
-            "content": 1
+            "description": 1
         }))
         result["guidanceflows"] = guidance_data
 
     if "handoff" in requested_collections:
         handoff_data = list(handoff_collection.find(query, {
             "_id": 0,
-            "guidance": 1
+            "description": 1
         }))
         result["handoffscenarios"] = handoff_data
 
