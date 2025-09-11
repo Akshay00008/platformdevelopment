@@ -136,6 +136,7 @@ def chatbot(chatbot_id: str, version_id: str, prompt: str, user_id: str) -> str:
             "collection_name": ["guidance", "handoff"]
         }
         guidelines = fetch_data(request_body)
+        print(guidelines)
         Bot_information = Bot_Retrieval(chatbot_id, version_id)
         bot_company = company_Retrieval()
 
