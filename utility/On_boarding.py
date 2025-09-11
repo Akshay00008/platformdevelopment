@@ -20,8 +20,7 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-
-# --- Global MongoDB client singleton for reuse ---
+# MongoDB client singleton
 class MongoConnectionSingleton:
     _client: Optional[MongoClient] = None
 
@@ -31,112 +30,84 @@ class MongoConnectionSingleton:
             cls._client = MongoClient(connection_str)
         return cls._client
 
-
 try:
     if not os.environ.get("OPENAI_API_KEY"):
         os.environ["OPENAI_API_KEY"] = getpass.getpass("Enter API key for OpenAI:")
-
     embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
-
     api = os.getenv('OPENAI_API_KEY')
     model = os.getenv('GPT_model')
     model_provider = os.getenv('GPT_model_provider')
     if not api or not model or not model_provider:
         raise ValueError("Please check the OPENAI_API_KEY, GPT_model, and GPT_model_provider.")
-
 except Exception as e:
     logger.error(f"Initialization failed: {e}")
     raise
 
-
 def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
-    """Calculate cosine similarity between two dense vectors."""
-    v1 = np.array(vec1)
-    v2 = np.array(vec2)
+    v1, v2 = np.array(vec1), np.array(vec2)
     dot = np.dot(v1, v2)
-    norm1 = np.linalg.norm(v1)
-    norm2 = np.linalg.norm(v2)
+    norm1, norm2 = np.linalg.norm(v1), np.linalg.norm(v2)
     if norm1 == 0 or norm2 == 0:
         return 0.0
     return dot / (norm1 * norm2)
-
 
 def check_fixscenarios(user_query: str,
                        mongo_connection_str: str = "mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017/",
                        database_name: str = "ChatbotDB-DEV",
                        similarity_threshold: float = 0.9) -> Optional[str]:
     """
-    Check the fixscenarios MongoDB collection for a corrected response
-    where the semantic similarity between user_query and stored question exceeds threshold.
-
-    Returns the corrected_response if similarity found, else None.
+    Check fixscenarios collection for corrected response matching user query with high similarity.
     """
     try:
         client = MongoConnectionSingleton.get_client(mongo_connection_str)
         db = client[database_name]
         collection = db.fixscenarios
-        scenarios = list(collection.find({}))  # Optionally filter; e.g. {'is_enabled': True}
+        scenarios = list(collection.find({}))  # Optionally filter {'is_enabled': True}
 
         if not scenarios:
             return None
 
-        query_vector = embeddings.embed_query(user_query)
+        query_vec = embeddings.embed_query(user_query)
 
         for scenario in scenarios:
-            scenario_question = scenario.get("customer_question", "")
-            if not scenario_question:
+            ques = scenario.get("customer_question", "")
+            if not ques:
                 continue
-            scenario_vector = embeddings.embed_query(scenario_question)
-            score = cosine_similarity(query_vector, scenario_vector)
+            scenario_vec = embeddings.embed_query(ques)
+            score = cosine_similarity(query_vec, scenario_vec)
             if score > similarity_threshold:
                 return scenario.get("corrected_response")
-
         return None
     except Exception as err:
         logger.error(f"Error during fixscenarios semantic check: {err}")
         return None
 
-
 def load_llm(key: str, model_provider: str, model_name: str):
-    """
-    Initialize and return the LLM chat model.
-    """
     try:
         if not all([key, model_provider, model_name]):
-            raise ValueError("Missing LLM configuration in secrets.")
+            raise ValueError("Missing LLM configuration.")
         os.environ["API_KEY"] = key
         return init_chat_model(model_name, model_provider=model_provider)
     except Exception as e:
         logger.error(f"Failed to initialize LLM: {e}")
         raise
 
-
 llm = load_llm(api, model_provider, model)
 
-
-# Conversation history per user
 converstation_state: dict[str, List[dict]] = {}
-
-
-# Cache for retrieved FAISS documents
 retrieval_cache: dict[tuple, List[Document]] = {}
-
-# Cache for LLM responses
 llm_response_cache: dict[tuple, str] = {}
 
-
 def chatbot(chatbot_id: str, version_id: str, prompt: str, user_id: str) -> str:
-    """
-    Main chatbot interface. Checks fixscenarios for similarity and response fallback, otherwise calls LLM pipeline.
-    """
     try:
         request_body = {
             "chatbot_id": chatbot_id,
             "version_id": version_id,
-            "collection_name": ["guidance", "handoff"]
+            "collection_name": ["guidance", "handoff", "handoffbuzzwords"]
         }
         guidelines = fetch_data(request_body)
-        print(guidelines)
+        print(guidelines)  # Debug
+
         Bot_information = Bot_Retrieval(chatbot_id, version_id)
         bot_company = company_Retrieval()
 
@@ -145,21 +116,38 @@ def chatbot(chatbot_id: str, version_id: str, prompt: str, user_id: str) -> str:
         converstation_history = converstation_state[user_id]
         converstation_state[user_id].append({'role': 'user', 'content': prompt})
 
-        # Check fixscenarios for a matching corrected response
+        # Handoff scenarios check
+        handoff_descs = [d.get("description", "").lower() for d in guidelines.get("handoffscenarios", [])]
+        handoff_keywords = [
+            "fire", "melt", "burned", "melted", "burned up",
+            "new product", "not present in your list",
+            "price", "pricing",
+            "speak with a live agent", "unable to resolve", "live agent"
+        ]
+        prompt_lower = prompt.lower()
+
+        if any(kw in prompt_lower for kw in handoff_keywords) or \
+           any(desc and (desc in prompt_lower or prompt_lower in desc) for desc in handoff_descs):
+            handoff_response = "Let's get you connected to one of our live agents so they can assist you further. Would it be okay if I connect you now?"
+            converstation_state[user_id].append({'role': 'bot', 'content': handoff_response})
+            return handoff_response
+
+        # Fixscenarios check
         fix_response = check_fixscenarios(prompt)
         if fix_response:
             converstation_state[user_id].append({'role': 'bot', 'content': fix_response})
             return fix_response
 
         greeting = Bot_information[0].get('greeting_message', "Hello!")
-        purpose = Bot_information[0].get('purpose', "You are an AI assistant helping users with their queries on behalf of the organization. "
-                                                    "You provide clear and helpful responses while avoiding personal details (such as name, age, birth information, or contact info) "
-                                                    "and sensitive transactional data (such as order details, delivery details, or payment information")
+        purpose = Bot_information[0].get('purpose', 
+                                         "You are an AI assistant helping users with their queries on behalf of the organization. "
+                                         "You provide clear and helpful responses while avoiding personal details and sensitive data.")
         languages = Bot_information[0].get('supported_languages', ["English"])
         tone_and_style = Bot_information[0].get('tone_style', "Friendly and professional")
-        company_info = bot_company[0].get('bot_company', "You are an AI assistant representing the organization. "
-                                                         "Your task is to help customers with their needs and guide them with relevant information about the organization's services, "
-                                                         "without disclosing personal user data or sensitive company records.")
+        company_info = bot_company[0].get('bot_company', 
+                                         "You are an AI assistant representing the organization. "
+                                         "Your task is to help customers with their needs and guide them with relevant information, "
+                                         "without disclosing personal user data or sensitive company records.")
 
         cache_key_llm = (user_id, chatbot_id, version_id, prompt.lower())
         if cache_key_llm in llm_response_cache:
@@ -177,14 +165,9 @@ def chatbot(chatbot_id: str, version_id: str, prompt: str, user_id: str) -> str:
         logger.error(f"Error in chatbot function: {e}")
         return f"An error occurred: {e}"
 
-
 def Personal_chatbot(converstation_history: List[dict], prompt: str, languages: List[str], purpose: str,
                     tone_and_style: str, greeting: str, guidelines: dict, company_info: str,
                     chatbot_id: str, version_id: str) -> str:
-    """
-    Build and run the conversational graph to retrieve context from FAISS, then generate LLM response.
-    """
-
     class State(TypedDict):
         question: str
         context: List[Document]
@@ -195,30 +178,24 @@ def Personal_chatbot(converstation_history: List[dict], prompt: str, languages: 
         if cache_key in retrieval_cache:
             logger.info("Using cached retrieval results")
             return {"context": retrieval_cache[cache_key]}
-
         try:
             faiss_index_dir = "/home/bramhesh_srivastav/platformdevelopment/faiss_indexes"
             faiss_index_filename = f"{chatbot_id}_{version_id}_faiss_index"
             faiss_index_website = f"{chatbot_id}_{version_id}_faiss_index_website"
-
             faiss_path_1 = os.path.join(faiss_index_dir, faiss_index_filename)
             faiss_path_2 = os.path.join(faiss_index_dir, faiss_index_website)
-
             if not os.path.exists(faiss_path_1):
                 raise FileNotFoundError(f"FAISS index not found at {faiss_path_1}")
             if not os.path.exists(faiss_path_2):
                 raise FileNotFoundError(f"FAISS index not found at {faiss_path_2}")
-
             logger.info(f"Loading FAISS index from {faiss_path_1}")
             new_vector_store = FAISS.load_local(faiss_path_1, embeddings, allow_dangerous_deserialization=True)
             logger.info(f"Loading FAISS index from {faiss_path_2}")
             new_vector_store_1 = FAISS.load_local(faiss_path_2, embeddings, allow_dangerous_deserialization=True)
             logger.info("FAISS indexes loaded successfully.")
-
             retrieved_docs = new_vector_store.similarity_search(state['question'])
             retrieved_docs_2 = new_vector_store_1.similarity_search(state['question'])
             logger.info("retrieved_docs indexes completed successfully.")
-
             combined_docs = []
             seen_docs = set()
             for doc in retrieved_docs:
@@ -229,11 +206,9 @@ def Personal_chatbot(converstation_history: List[dict], prompt: str, languages: 
                 if doc.id not in seen_docs:
                     combined_docs.append(doc)
                     seen_docs.add(doc.id)
-
             logger.info("combined_docs returned successfully.")
             retrieval_cache[cache_key] = combined_docs
             return {"context": combined_docs}
-
         except Exception as e:
             logger.error(f"Error in document retrieval: {e}")
             return {"context": []}
@@ -269,7 +244,6 @@ def Personal_chatbot(converstation_history: List[dict], prompt: str, languages: 
             ]
             response = llm.invoke(messages)
             return {"answer": response.content}
-
         except Exception as e:
             logger.error(f"Error in LLM generation: {e}")
             return {"answer": "Sorry, something went wrong in generating a response."}

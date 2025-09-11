@@ -17,7 +17,7 @@ db = mongo_client[DB_NAME]
 guidance_collection = db["guidanceflows"]
 handoff_collection = db["handoffscenarios"]
 faq_collection = db["faqs"]
-
+buzz_words = db["handoffbuzzwords"]
 # ==== CORE FUNCTION ====
 
 def fetch_data(request_body):
@@ -60,6 +60,13 @@ def fetch_data(request_body):
             "description": 1
         }))
         result["handoffscenarios"] = handoff_data
+
+    if "handoffbuzzwords" in requested_collections:
+        buzzword_data = list(buzz_words.find(query, {
+            "_id": 0,
+            "buzzwords": 1
+        }))
+        result["handoffbuzzwords"] = buzzword_data    
 
     return result
 
