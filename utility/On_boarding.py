@@ -121,8 +121,9 @@ def chatbot(chatbot_id: str, version_id: str, prompt: str, user_id: str) -> str:
         handoff_keywords = [
             "fire", "melt", "burned", "melted", "burned up",
             "new product", "not present in your list",
-            "price", "pricing",
-            "speak with a live agent", "unable to resolve", "live agent"
+            "price", "pricing","finance", "payment", "billing",
+            "delivery status", "order status", "warranty and service requests","personal details"
+                                    "speak with a live agent", "unable to resolve", "live agent"
         ]
         prompt_lower = prompt.lower()
 
