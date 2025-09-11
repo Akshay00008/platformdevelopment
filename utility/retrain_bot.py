@@ -8,7 +8,7 @@ from langchain.text_splitter import CharacterTextSplitter
 
 # ==== CONFIG ====
 MONGO_URI = "mongodb://dev:N47309HxFWE2Ehc@35.209.224.122:27017"
-DB_NAME = "ChatbotDB"
+DB_NAME = "ChatbotDB-DEV"
 VECTOR_DB_PATH = "faiss_index_faq"
 
 # ==== DB CONNECTION ====
